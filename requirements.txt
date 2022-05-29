@@ -1,1 +1,2 @@
 dnspython~=2.2.1
+dnslib~=0.9.19

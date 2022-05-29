@@ -1,20 +1,16 @@
 from resolver import DNSResolver
+from dnslib.server import DNSServer, DNSLogger
+from time import sleep
 
 
 if __name__ == "__main__":
     resolver = DNSResolver()
-    while True:
-        try:
-            print("Enter name: ", end='')
-            name = input().strip()
-            result = resolver.resolve(name)
-            if result:
-                if len(result) == 1:
-                    print(name + " has address: ", end='')
-                else:
-                    print(name + " has addresses: ", end='')
-                print(*result, sep='; ')
-            else:
-                print("Couldn't find the address, check the correctness of name.")
-        except KeyboardInterrupt:
-            break
+    logger = DNSLogger(prefix=False, logf=lambda s: print(s.upper()))
+    server = DNSServer(resolver, address="localhost", logger=logger)
+    server.start_thread()
+
+    try:
+        while server.isAlive():
+            sleep(1)
+    except KeyboardInterrupt:
+        pass

@@ -4,9 +4,11 @@ import dns.query
 import dns.rdata
 import dns.rdataclass
 import dns.rdatatype
+from dnslib import RR, QTYPE, A
+from dnslib.server import BaseResolver
 
 
-class DNSResolver:
+class DNSResolver(BaseResolver):
     # https://root-servers.org/
     ROOT_SERVERS = (
         "198.41.0.4",
@@ -25,20 +27,22 @@ class DNSResolver:
     )
 
     def __init__(self):
+        super()
         self.domain_cache = {}
 
-    def resolve(self, name: str) -> list:
-        target_name: dns.name = dns.name.from_text(name)
-        response = self.__find(target_name)
-        ipv4_rec = []
+    def resolve(self, request, handler):
+        reply = request.reply()
+        name = request.q.qname
+        response = self.__find(str(name))
         if response:
             for answers in response.answer:
                 for answer in answers:
                     if answer.rdtype == dns.rdatatype.A:
-                        ipv4_rec.append(str(answer))
-        return ipv4_rec
+                        reply.add_answer(RR(name, QTYPE.A, rdata=A(str(answer)), ttl=60))
+        return reply
 
-    def __find(self, target_name: dns.name.Name) -> dns.message.Message:
+    def __find(self, name: str) -> dns.message.Message:
+        target_name: dns.name = dns.name.from_text(name)
         split = str(target_name).split(".")
         domain = split[len(split) - 2]
         if domain not in self.domain_cache:
